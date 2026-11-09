@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SMS Backend Smoke Test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 850px; margin: 2rem auto; padding: 0 1rem; background: #0f172a; color: #f8fafc; }
+    .card { background: #1e293b; padding: 1.25rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #334155; }
+    input, button { padding: 0.5rem 0.75rem; border-radius: 4px; border: 1px solid #475569; background: #0f172a; color: #fff; margin-right: 0.5rem; }
+    button { background: #2563eb; border-color: #2563eb; cursor: pointer; font-weight: 600; }
+    button:hover { background: #1d4ed8; }
+    pre { background: #020617; padding: 1rem; border-radius: 6px; overflow-x: auto; color: #38bdf8; border: 1px solid #1e293b; }
+  </style>
+</head>
+<body>
+  <h2>SMS Backend Smoke-Test Console</h2>
+  <div class="card">
+    <h3>1. Login</h3>
+    <input id="user" value="admin" placeholder="Username">
+    <input id="pass" type="password" value="Admin@12345" placeholder="Password">
+    <button onclick="doLogin()">Log In</button>
+    <button onclick="run('auth.php?action=logout', {method:'POST'})">Log Out</button>
+  </div>
+  <div class="card">
+    <h3>2. Test Endpoints</h3>
+    <button onclick="run('dashboard.php')">Dashboard Summary</button>
+    <button onclick="run('crud.php?entity=products&action=list')">List Products</button>
+    <button onclick="run('inventory.php?action=low_stock')">Low Stock Alerts</button>
+    <button onclick="run('billing.php?action=checkout', {method:'POST', body:{items:[{product_id:1, quantity:2}], payment_method:'Cash', amount_tendered:1300}})">Test Checkout (2x Rice)</button>
+    <button onclick="run('reports.php?action=sales&period=daily')">Sales Report</button>
+  </div>
+  <pre id="out">Click "Log In" above to start testing...</pre>
+  <script src="js/api.js"></script>
+  <script>
+    const out = document.getElementById('out');
+    async function doLogin() {
+      try {
+        const u = await login(document.getElementById('user').value, document.getElementById('pass').value);
+        out.textContent = JSON.stringify({ logged_in_as: u, csrf_token: csrfToken }, null, 2);
+      } catch (e) { out.textContent = 'Error: ' + e.message; }
+    }
+    async function run(path, opts) {
+      try {
+        const data = await api(path, opts);
+        out.textContent = JSON.stringify(data, null, 2);
+      } catch (e) { out.textContent = 'Error (' + (e.status || '') + '): ' + e.message + '\n' + JSON.stringify(e.details || {}, null, 2); }
+    }
+  </script>
+</body>
+</html>
